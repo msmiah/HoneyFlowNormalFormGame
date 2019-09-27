@@ -187,7 +187,6 @@ public class StacklebergSolver {
 	private void SetObjective() throws IloException {
 		setCplexParams(1e-6);
 		cplex.addMaximize(objective);
-		//System.out.println("Objective Function : " + objective);
 	}
 
 }
