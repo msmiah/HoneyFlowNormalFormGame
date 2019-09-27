@@ -5,6 +5,7 @@ import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
 import ilog.cplex.IloCplex;
+import ilog.cplex.IloCplex.UnknownObjectException;
 import normal_form_game.NormalFormGame;
 
 import java.io.NotActiveException;
@@ -111,51 +112,50 @@ public class StacklebergSolver {
 
 			}
 		}
-		
-		for(int i = 0; i < Utils.TOTAL_TYPE_OF_VULNERABILITIES; i++) {
-			for(int k = 0;  k < strategyVars[i].size(); k++) {
+
+		for (int i = 0; i < Utils.TOTAL_TYPE_OF_VULNERABILITIES; i++) {
+			for (int k = 0; k < strategyVars[i].size(); k++) {
 				double value = -(mNFG.getHFCost(i) * k);
 				IloNumVar zVar = linearization(strategyVars[i].get(k), opponentStrategyVars[noAttackAction]);
 				objective.addTerm(value, zVar);
-				zVars[noAttackAction].add(zVar); 
+				zVars[noAttackAction].add(zVar);
 			}
 		}
 	}
-	
+
 	public void setBrConstraints() throws IloException {
-		
+
 		IloLinearNumExpr lhs = cplex.linearNumExpr();
-		lhs.addTerm(0, opponentStrategyVars[opponentStrategyVars.length-1]);
-		for (int i = 0; i < opponentStrategyVars.length-1; i++) {
+		lhs.addTerm(0, opponentStrategyVars[opponentStrategyVars.length - 1]);
+		for (int i = 0; i < opponentStrategyVars.length - 1; i++) {
 			double rVal = mNFG.getRealValue(i);
 			double hVal = mNFG.getHFValue(i);
-			double tmp = hVal*(-1);
+			double tmp = hVal * (-1);
 			lhs.addTerm(tmp, opponentStrategyVars[i]);
-			for (int k = 0; k <zVars[i].size(); k++) {
+			for (int k = 0; k < zVars[i].size(); k++) {
 				double totVal = (rVal + hVal);
 				double pr = mNFG.getRealProbability(i, k);
 				double value = (totVal * pr);
-				lhs.addTerm(value,zVars[i].get(k));
+				lhs.addTerm(value, zVars[i].get(k));
 
 			}
 		}
-		cplex.addGe(lhs, 0,"BR-No-attack");
-		for (int i = 0; i < strategyVars.length-1; i++) {
+		cplex.addGe(lhs, 0, "BR-No-attack");
+		for (int i = 0; i < strategyVars.length - 1; i++) {
 			IloLinearNumExpr rhs = cplex.linearNumExpr();
 			double rVal = mNFG.getRealValue(i);
 			double hVal = mNFG.getHFValue(i);
-			double tmp = hVal*(-1);
+			double tmp = hVal * (-1);
 			rhs.setConstant(tmp);
-			for (int k = 0; k <zVars[i].size(); k++) {
+			for (int k = 0; k < zVars[i].size(); k++) {
 				double totVal = (rVal + hVal);
 				double pr = mNFG.getRealProbability(i, k);
 				double value = (totVal * pr);
-				rhs.addTerm(value,strategyVars[i].get(k));
+				rhs.addTerm(value, strategyVars[i].get(k));
 
 			}
-		    cplex.addGe(lhs, rhs,"BR"+i);
+			cplex.addGe(lhs, rhs, "BR" + i);
 		}
-		
 
 	}
 
@@ -187,6 +187,40 @@ public class StacklebergSolver {
 	private void SetObjective() throws IloException {
 		setCplexParams(1e-6);
 		cplex.addMaximize(objective);
+	}
+
+	public void printOpponentStrategyVars() {
+
+		System.out.println("..........................Attacker's Strategies.......................");
+		for (IloNumVar v : opponentStrategyVars) {
+			try {
+				if (null != v)
+					System.out.println(v.getName() + ": \t" + cplex.getValue(v));
+			} catch (UnknownObjectException e) {
+				e.printStackTrace();
+			} catch (IloException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void printtStrategyVars() {
+
+		System.out.println("..........................Defender's Strategies.......................");
+		for (int i = 0; i < Utils.TOTAL_TYPE_OF_VULNERABILITIES; i++) {
+			System.out.println("            ******** Vulnerability Type = "+ i + "   **************");
+			for (int j =0; j< strategyVars[i].size(); j++) {
+				try {
+					IloNumVar v = strategyVars[i].get(j);
+					if (null != v)
+						System.out.println(v.getName() + ": \t" + cplex.getValue(v));
+				} catch (UnknownObjectException e) {
+					e.printStackTrace();
+				} catch (IloException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 }

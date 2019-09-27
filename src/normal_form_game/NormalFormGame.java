@@ -4,31 +4,11 @@ import normal_form_solver.StacklebergSolver;
 
 public class NormalFormGame {
 
-	private double[] realFlowValue = { 10, 15 };
-	private double[] honeyFlowValue = { 5, 7 };
-	private double[] costOfhoneyFlow = { 1, 2 };
-	private int[] numOfRealEachType = { 5, 3 };
-	private int[] upperBoundOfHoneyFlow = {2, 1};
-	/*
-	public double getDefenderUtilty(int index, int hNum) {
-		double rVal = - getRealValue(index);
-		double hVal = getHFValue(index);
-		double cost = getHFCost(index);
-		int rNum = getNumberOfRealHost(index);
-		double Px = rNum / (rNum + hNum);
-		return ((Px * rVal) + ((1 - Px) * (hVal - cost)));
-	}
-
-	public double getAttackerUtilty(int index, int hNum) {
-		double rVal = getRealValue(index);
-		double hVal = -getHFValue(index);
-		int rNum = getNumberOfRealHost(index);
-		double Px = rNum / (rNum + hNum);
-		return ((Px * rVal) + ((1 - Px) * hVal));
-		
-	}
-	*/
-	
+	private double[] realFlowValue = { 15, 10 };
+	private double[] honeyFlowValue = { 15, 10 };
+	private double[] costOfhoneyFlow = { 2, 1 };
+	private int[] numOfRealEachType = { 3, 15 };
+	private int[] upperBoundOfHoneyFlow = {1, 2};
 	public double getRealProbability(int index, int numHF) {	
 		double rNum = getNumberOfRealHost(index);
 		return  (rNum / (rNum + numHF));
@@ -58,6 +38,8 @@ public class NormalFormGame {
 	   NormalFormGame nfGame = new NormalFormGame();
 	   StacklebergSolver stSolver = new StacklebergSolver(nfGame);
 	   stSolver.solveGame();
+	   stSolver.printtStrategyVars();
+	   stSolver.printOpponentStrategyVars();
 		
 	}
  
