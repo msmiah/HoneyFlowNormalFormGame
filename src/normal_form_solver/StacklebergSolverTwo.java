@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 import Utils.Utils;
 
-public class StacklebergSolver {
+public class StacklebergSolverTwo {
 
 	IloCplex cplex;
 	IloLinearNumExpr objective;
@@ -25,7 +25,7 @@ public class StacklebergSolver {
 	int player1 = 1;
 	int player2 = 2;
 
-	public StacklebergSolver(NormalFormGame nfg) {
+	public StacklebergSolverTwo(NormalFormGame nfg) {
 		this.mNFG = nfg;
 		try {
 			cplex = new IloCplex();
@@ -69,13 +69,11 @@ public class StacklebergSolver {
 		lz2.addTerm(1, z);
 		lz2.addTerm(-1, var2);
 		cplex.addLe(lz2, 0, "lZ1" + var1 + var2);
-
 		/* A+x-Z <= 1 */
 		lz3.addTerm(-1, z);
 		lz3.addTerm(1, var1);
 		lz3.addTerm(1, var2);
 		cplex.addLe(lz3, 1, "TLZ3" + var1+var2);
-		
 		return z;
 	}
 
@@ -102,8 +100,13 @@ public class StacklebergSolver {
 	public void setObjectiveParams() throws IloException {
 		int noAttackAction = opponentStrategyVars.length - 1;
 		for (int i = 0; i < opponentStrategyVars.length - 1; i++) {
+			double rVal = mNFG.getRealValue(i);
+			double hVal = mNFG.getHFValue(i);
+			objective.addTerm(hVal, opponentStrategyVars[i]);
 			for (int k = 0; k < strategyVars[i].size(); k++) {
-				double value = mNFG.getDefenderUtilty(i,k);
+				double totVal = -(rVal + hVal);
+				double pr = mNFG.getRealProbability(i, k);
+				double value = (totVal * pr)- (mNFG.getHFCost(i) * k);
 				IloNumVar zVar = linearization(strategyVars[i].get(k), opponentStrategyVars[i]);
 				objective.addTerm(value, zVar);
 				zVars[i].add(zVar);
@@ -126,8 +129,14 @@ public class StacklebergSolver {
 		IloLinearNumExpr lhs = cplex.linearNumExpr();
 		lhs.addTerm(0, opponentStrategyVars[opponentStrategyVars.length - 1]);
 		for (int i = 0; i < opponentStrategyVars.length - 1; i++) {
+			double rVal = mNFG.getRealValue(i);
+			double hVal = mNFG.getHFValue(i);
+			double tmp = hVal * (-1);
+			lhs.addTerm(tmp, opponentStrategyVars[i]);
 			for (int k = 0; k < zVars[i].size(); k++) {
-				double value = mNFG.getAttackerUtilty(i, k);
+				double totVal = (rVal + hVal);
+				double pr = mNFG.getRealProbability(i, k);
+				double value = (totVal * pr);
 				lhs.addTerm(value, zVars[i].get(k));
 
 			}
@@ -135,13 +144,17 @@ public class StacklebergSolver {
 		cplex.addGe(lhs, 0, "BR-No-attack");
 		for (int i = 0; i < strategyVars.length; i++) {
 			IloLinearNumExpr rhs = cplex.linearNumExpr();
+			double rVal = mNFG.getRealValue(i);
+			double hVal = mNFG.getHFValue(i);
+			double tmp = hVal * (-1);
+			rhs.setConstant(tmp);
 			for (int k = 0; k < zVars[i].size(); k++) {
-
-				double value = mNFG.getAttackerUtilty(i, k);
+				double totVal = (rVal + hVal);
+				double pr = mNFG.getRealProbability(i, k);
+				double value = (totVal * pr);
 				rhs.addTerm(value, strategyVars[i].get(k));
 
 			}
-			System.out.println("rhs" + rhs);
 			cplex.addGe(lhs, rhs, "BR" + i);
 		}
 
