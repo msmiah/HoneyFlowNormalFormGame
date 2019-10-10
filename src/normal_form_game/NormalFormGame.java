@@ -1,5 +1,7 @@
 package normal_form_game;
 
+import normal_form_solver.FollowerGreedySolver;
+import normal_form_solver.FollowerRandomSolver;
 import normal_form_solver.StacklebergSolver;
 import normal_form_solver.StacklebergSolverTwo;
 
@@ -55,14 +57,34 @@ public class NormalFormGame {
 	public int getUpperBound(int i) {
 		return upperBoundOfHoneyFlow[i];
 	}
+	public int getRandomBetweenRange(int min, int max){
+	    double x = (Math.random()*((max-min)+1))+min;
+	    return (int)x;
+	}
+	
 
 	public static void main(String[] args) {
 		NormalFormGame nfGame = new NormalFormGame();
+		
+		System.out.println("***************************** Stackleberg Solver*******************************");
 		StacklebergSolver stSolver = new StacklebergSolver(nfGame);
 		stSolver.solveGame();
 		stSolver.printtStrategyVars();
 		stSolver.printOpponentStrategyVars();
-
+		
+		
+		System.out.println("****************************** Follower Random Solver ************************");
+		FollowerRandomSolver randomSolver = new FollowerRandomSolver(nfGame);
+		randomSolver.solveGame();
+		randomSolver.printtStrategyVars();
+		randomSolver.printOpponentStrategyVars();
+		
+		
+		System.out.println("****************************** Follower Greedy Solver ************************");
+		FollowerGreedySolver greedySolver = new FollowerGreedySolver(nfGame);
+		greedySolver.solveGame();
+		greedySolver.printtStrategyVars();
+		greedySolver.printOpponentStrategyVars();
 
 	}
 
