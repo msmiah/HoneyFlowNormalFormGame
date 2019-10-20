@@ -25,6 +25,7 @@ public class StacklebergSolverTwo {
 	int player1 = 1;
 	int player2 = 2;
 
+	
 	public StacklebergSolverTwo(NormalFormGame nfg) {
 		this.mNFG = nfg;
 		try {

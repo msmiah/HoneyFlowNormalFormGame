@@ -18,10 +18,12 @@ public class FollowerGreedySolver {
 	ArrayList<IloNumVar>[] strategyVars;
 	int[] opponentStrategyVars;
 	String[] opponentStrategyNames;
+	double attackerValue; 
 	double valueOfGame;
 	int player1 = 1;
 	int player2 = 2;
 
+	
 	public FollowerGreedySolver(NormalFormGame nfg) {
 		this.mNFG = nfg;
 		try {
@@ -71,6 +73,7 @@ public class FollowerGreedySolver {
 			exValue[i] = value;
 		}
 		int idx = getIndexOfLargest(exValue);
+		attackerValue = exValue[idx];
 		opponentStrategyVars[idx]++;
 	}
 	
@@ -95,21 +98,16 @@ public class FollowerGreedySolver {
 	}
 
 	public void setObjectiveParams() throws IloException {
-		int noAttackAction = opponentStrategyVars.length - 1;
 		for (int i = 0; i < opponentStrategyVars.length - 1; i++) {
 			for (int k = 0; k < strategyVars[i].size(); k++) {
 				double value = mNFG.getDefenderUtilty(i, k) * opponentStrategyVars[i];
 				objective.addTerm(value, strategyVars[i].get(k));
+				double cost = -(mNFG.getHFCost(i) * k);
+				objective.addTerm(cost, strategyVars[i].get(k));
 
 			}
 		}
 
-		for (int i = 0; i < Utils.TOTAL_TYPE_OF_VULNERABILITIES; i++) {
-			for (int k = 0; k < strategyVars[i].size(); k++) {
-				double value = -(mNFG.getHFCost(i) * k)* opponentStrategyVars[noAttackAction];
-				objective.addTerm(value, strategyVars[i].get(k));
-			}
-		}
 	}
 
 
@@ -144,7 +142,8 @@ public class FollowerGreedySolver {
 	}
 
 	public void printOpponentStrategyVars() {
-
+		
+		System.out.println("Attacker Utility = " + attackerValue);
 		System.out.println("..........................Attacker's Strategies.......................");
 		for (int i = 0; i < Utils.ATTACKER_ACTIONS; i++) {
 			System.out.println(opponentStrategyNames[i] + "   " + opponentStrategyVars[i]);

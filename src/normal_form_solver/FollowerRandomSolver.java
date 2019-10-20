@@ -84,6 +84,8 @@ public class FollowerRandomSolver {
 			for (int k = 0; k < strategyVars[i].size(); k++) {
 				double value = mNFG.getDefenderUtilty(i, k) * opponentStrategyVars[i];
 				objective.addTerm(value, strategyVars[i].get(k));
+				double cost = -(mNFG.getHFCost(i) * k);
+				objective.addTerm(cost, strategyVars[i].get(k));
 
 			}
 		}

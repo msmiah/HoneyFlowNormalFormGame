@@ -9,10 +9,11 @@ import normal_form_solver.StacklebergSolverTwo;
 public class NormalFormGame {
 
 	private double[] realFlowValue = { 1, 1};
-	private double[] honeyFlowValue = { 1, 1 };
-	private double[] costOfhoneyFlow = { 0.1, 0.1 };
-	private int[] numOfRealEachType = { 2, 2};
-	private int[] upperBoundOfHoneyFlow = { 2, 3 };
+	private double[] honeyFlowValue = {1 , 1 };
+	private double[] costOfhoneyFlow = { 0.1, .15 };
+	private int[] numOfRealEachType = { 1, 1};
+	private int[] upperBoundOfHoneyFlow = {1,2};
+	
 
 	public double getRealProbability(int index, int numHF) {
 		double rNum = getNumberOfRealHost(index);
@@ -23,10 +24,9 @@ public class NormalFormGame {
 	public double getDefenderUtilty(int index, int hNum) {
 		double rVal = -getRealValue(index);
 		double hVal = getHFValue(index);
-		double cost = - (getHFCost(index) * hNum);
 		int rNum = getNumberOfRealHost(index);
 		double Px = (double)rNum / (double)(rNum + hNum);
-		return ((Px * rVal) + ((1 - Px) * hVal) + cost);
+		return ((Px * rVal) + ((1 - Px) * hVal));
 	}
 
 	public double getAttackerUtilty(int index, int hNum) {
@@ -85,6 +85,7 @@ public class NormalFormGame {
 		greedySolver.solveGame();
 		greedySolver.printtStrategyVars();
 		greedySolver.printOpponentStrategyVars();
+		
 
 	}
 

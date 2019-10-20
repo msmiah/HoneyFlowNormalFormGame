@@ -21,10 +21,11 @@ public class StacklebergSolver {
 	ArrayList<IloNumVar>[] strategyVars;
 	IloNumVar[] opponentStrategyVars;
 	ArrayList<IloNumVar>[] zVars;
+	IloLinearNumExpr attackerValue; 
 	double valueOfGame;
 	int player1 = 1;
 	int player2 = 2;
-
+	
 	public StacklebergSolver(NormalFormGame nfg) {
 		this.mNFG = nfg;
 		try {
@@ -96,27 +97,20 @@ public class StacklebergSolver {
 			opponentStrategyVars[i] = v;
 		}
 		cplex.addEq(sumA_i, 1, "Attacker strategies");
+		
 
 	}
 
 	public void setObjectiveParams() throws IloException {
-		int noAttackAction = opponentStrategyVars.length - 1;
 		for (int i = 0; i < opponentStrategyVars.length - 1; i++) {
 			for (int k = 0; k < strategyVars[i].size(); k++) {
 				double value = mNFG.getDefenderUtilty(i,k);
 				IloNumVar zVar = linearization(strategyVars[i].get(k), opponentStrategyVars[i]);
 				objective.addTerm(value, zVar);
 				zVars[i].add(zVar);
+				double cost = -(mNFG.getHFCost(i) * k);
+				objective.addTerm(cost, strategyVars[i].get(k));
 
-			}
-		}
-
-		for (int i = 0; i < Utils.TOTAL_TYPE_OF_VULNERABILITIES; i++) {
-			for (int k = 0; k < strategyVars[i].size(); k++) {
-				double value = -(mNFG.getHFCost(i) * k);
-				IloNumVar zVar = linearization(strategyVars[i].get(k), opponentStrategyVars[noAttackAction]);
-				objective.addTerm(value, zVar);
-				zVars[noAttackAction].add(zVar);
 			}
 		}
 	}
@@ -125,14 +119,16 @@ public class StacklebergSolver {
 
 		IloLinearNumExpr lhs = cplex.linearNumExpr();
 		lhs.addTerm(0, opponentStrategyVars[opponentStrategyVars.length - 1]);
-		for (int i = 0; i < opponentStrategyVars.length - 1; i++) {
+		for (int i = 0; i < opponentStrategyVars.length-1; i++) {
 			for (int k = 0; k < zVars[i].size(); k++) {
 				double value = mNFG.getAttackerUtilty(i, k);
 				lhs.addTerm(value, zVars[i].get(k));
 
 			}
 		}
-		cplex.addGe(lhs, 0, "BR-No-attack");
+		
+		attackerValue = lhs;
+	
 		for (int i = 0; i < strategyVars.length; i++) {
 			IloLinearNumExpr rhs = cplex.linearNumExpr();
 			for (int k = 0; k < zVars[i].size(); k++) {
@@ -143,6 +139,8 @@ public class StacklebergSolver {
 			}
 			cplex.addGe(lhs, rhs, "BR" + i);
 		}
+		
+		cplex.addGe(lhs, 0, "BR-No-attack");
 
 	}
 
@@ -151,6 +149,7 @@ public class StacklebergSolver {
 			if (cplex.solve()) {
 				valueOfGame = cplex.getObjValue();
 				System.out.println("Defender's utility : " + valueOfGame);
+				System.out.println("Attacker's Utility : " + cplex.getValue(attackerValue));
 			}
 
 		} catch (IloException e) {
@@ -176,7 +175,7 @@ public class StacklebergSolver {
 		cplex.addMaximize(objective);
 	}
 
-	public void printOpponentStrategyVars() {
+	public void printOpponentStrategyVars(){
 
 		System.out.println("..........................Attacker's Strategies.......................");
 		for (IloNumVar v : opponentStrategyVars) {
