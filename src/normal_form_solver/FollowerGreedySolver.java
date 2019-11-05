@@ -18,11 +18,11 @@ public class FollowerGreedySolver {
 	ArrayList<IloNumVar>[] strategyVars;
 	int[] opponentStrategyVars;
 	String[] opponentStrategyNames;
-	double attackerValue; 
+	double attackerValue = 0; 
 	double valueOfGame;
 	int player1 = 1;
 	int player2 = 2;
-
+    double[][] opponentPayoff;
 	
 	public FollowerGreedySolver(NormalFormGame nfg) {
 		this.mNFG = nfg;
@@ -38,8 +38,10 @@ public class FollowerGreedySolver {
 	public void initializeDataStructure() throws IloException {
 		objective = cplex.linearNumExpr();
 		strategyVars = new ArrayList[Utils.TOTAL_TYPE_OF_VULNERABILITIES];
+		opponentPayoff = new double[Utils.TOTAL_TYPE_OF_VULNERABILITIES][];
 		for (int i = 0; i < Utils.TOTAL_TYPE_OF_VULNERABILITIES; i++) {
 			strategyVars[i] = new ArrayList<IloNumVar>();
+			opponentPayoff[i] = new double[mNFG.getUpperBound(i)+1];
 		}
 		opponentStrategyVars = new int[Utils.ATTACKER_ACTIONS];
 		opponentStrategyNames = new String[Utils.ATTACKER_ACTIONS];
@@ -66,14 +68,15 @@ public class FollowerGreedySolver {
 		double[] exValue  =new double[opponentStrategyVars.length];
 		for (int i = 0; i < opponentStrategyVars.length - 1; i++) {
 			double value = 0;
-			for (int k = 0; k <mNFG.getUpperBound(i); k++) {
-				 value += mNFG.getAttackerUtilty(i, k);
+			for (int k = 0; k <= mNFG.getUpperBound(i); k++) {
+				 double valTmp =mNFG.getAttackerUtilty(i, k); 
+				 value += valTmp;
+				 opponentPayoff[i][k] = valTmp;
 
 			}
 			exValue[i] = value;
 		}
 		int idx = getIndexOfLargest(exValue);
-		attackerValue = exValue[idx];
 		opponentStrategyVars[idx]++;
 	}
 	
@@ -110,7 +113,27 @@ public class FollowerGreedySolver {
 
 	}
 
-
+	public double getOpponentValue() {
+		for (int i = 0; i < Utils.TOTAL_TYPE_OF_VULNERABILITIES; i++) {
+			for (int j = 0; j < strategyVars[i].size(); j++) {
+				try {
+					IloNumVar v = strategyVars[i].get(j);
+					if (null != v) {
+						attackerValue += (opponentStrategyVars[i] * cplex.getValue(v) * opponentPayoff[i][j]);
+						//System.out.println(opponentPayoff[i][j]);
+					}
+				} catch (UnknownObjectException e) {
+					e.printStackTrace();
+				} catch (IloException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return Math.max(attackerValue,0);
+	}
+    public double getGameValue() {
+    	return valueOfGame;
+    }
 	public void solveGame() {
 		try {
 			if (cplex.solve()) {
@@ -142,8 +165,6 @@ public class FollowerGreedySolver {
 	}
 
 	public void printOpponentStrategyVars() {
-		
-		System.out.println("Attacker Utility = " + attackerValue);
 		System.out.println("..........................Attacker's Strategies.......................");
 		for (int i = 0; i < Utils.ATTACKER_ACTIONS; i++) {
 			System.out.println(opponentStrategyNames[i] + "   " + opponentStrategyVars[i]);
@@ -159,8 +180,9 @@ public class FollowerGreedySolver {
 			for (int j =0; j< strategyVars[i].size(); j++) {
 				try {
 					IloNumVar v = strategyVars[i].get(j);
-					if (null != v)
+					if (null != v) {
 						System.out.println(v.getName() + ": \t" + cplex.getValue(v));
+					}
 				} catch (UnknownObjectException e) {
 					e.printStackTrace();
 				} catch (IloException e) {
